@@ -3,6 +3,7 @@ import ssl
 from typing import Optional
 
 from tornado import gen
+from tornado.httpclient import HTTPRequest
 from tornado.ioloop import IOLoop
 from tornado.websocket import WebSocketError, websocket_connect
 
@@ -52,22 +53,23 @@ class Relay(BaseRelay):
         self.error_counter = 0
         self.timeout_error_counter = 0
         try:
+            request = HTTPRequest(
+                self.url, ssl_options=self.ssl_options, connect_timeout=self.timeout
+            )
             if self.timeout > 0:
                 self.ws = yield gen.with_timeout(
                     self.io_loop.time() + self.timeout,
                     websocket_connect(
-                        self.url,
+                        request,
                         ping_interval=60,
                         ping_timeout=120,
-                        ssl_options=self.ssl_options,
                     ),
                 )
             else:
                 self.ws = yield websocket_connect(
-                    self.url,
+                    request,
                     ping_interval=60,
                     ping_timeout=120,
-                    ssl_options=self.ssl_options,
                 )
             self.connected = True
             # self.io_loop.call_later(1, self.send_message, self.request)
