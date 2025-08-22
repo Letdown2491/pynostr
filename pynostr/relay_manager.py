@@ -3,6 +3,7 @@ import logging
 import time
 from dataclasses import dataclass
 from typing import Optional
+import ssl
 
 from tornado import gen
 from tornado.ioloop import IOLoop
@@ -44,6 +45,7 @@ class RelayManager:
         message_callback=None,
         message_callback_url=False,
         get_metadata=False,
+        ssl_context: Optional[ssl.SSLContext] = None,
     ):
         if policy is None:
             policy = RelayPolicy()
@@ -56,6 +58,7 @@ class RelayManager:
             close_on_eose=close_on_eose,
             message_callback=message_callback,
             message_callback_url=message_callback_url,
+            ssl_options=ssl_context,
         )
 
         if self.error_threshold is not None:
@@ -81,6 +84,7 @@ class RelayManager:
         message_callback=None,
         message_callback_url=False,
         get_metadata=False,
+        ssl_context: Optional[ssl.SSLContext] = None,
     ):
         for relay in relay_list:
             self.add_relay(
@@ -91,6 +95,7 @@ class RelayManager:
                 message_callback=message_callback,
                 message_callback_url=message_callback_url,
                 get_metadata=get_metadata,
+                ssl_context=ssl_context,
             )
 
     def remove_closed_relays(self):

@@ -1,5 +1,6 @@
 """Forked from https://github.com/jeffthibault/python-nostr.git."""
 
+import ssl
 import unittest
 
 from pynostr.event import Event
@@ -51,4 +52,13 @@ class TestPrivateKey(unittest.TestCase):
             test_subscription.id
             not in relay_manager.relays["ws://fake-relay2"].subscriptions.keys()
         )
+        relay_manager.close_all_relay_connections()
+
+
+class TestRelayManagerSSLContext(unittest.TestCase):
+    def test_add_relay_ssl_context(self):
+        ctx = ssl.create_default_context()
+        relay_manager = RelayManager()
+        relay_manager.add_relay(url="ws://fake-relay", ssl_context=ctx)
+        self.assertIs(relay_manager.relays["ws://fake-relay"].ssl_options, ctx)
         relay_manager.close_all_relay_connections()

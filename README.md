@@ -105,16 +105,21 @@ print(f"Public key: {public_key.bech32()}")
 
 **Connect to relays**
 
+An optional `ssl_context` parameter can be provided to `add_relay` to customize
+TLS settings.
+
 ```python
+import ssl
 from pynostr.relay_manager import RelayManager
 from pynostr.filters import FiltersList, Filters
 from pynostr.event import EventKind
 import time
 import uuid
 
+ctx = ssl.create_default_context()
 relay_manager = RelayManager(timeout=2)
-relay_manager.add_relay("wss://nostr-pub.wellorder.net")
-relay_manager.add_relay("wss://relay.damus.io")
+relay_manager.add_relay("wss://nostr-pub.wellorder.net", ssl_context=ctx)
+relay_manager.add_relay("wss://relay.damus.io", ssl_context=ctx)
 filters = FiltersList([Filters(kinds=[EventKind.TEXT_NOTE], limit=100)])
 subscription_id = uuid.uuid1().hex
 relay_manager.add_subscription_on_all_relays(subscription_id, filters)
