@@ -2,6 +2,10 @@
 
 import ssl
 import unittest
+from unittest.mock import patch
+
+from tornado import gen
+from tornado.httpclient import HTTPRequest
 
 from pynostr.event import Event
 from pynostr.filters import FiltersList
@@ -62,3 +66,37 @@ class TestRelayManagerSSLContext(unittest.TestCase):
         relay_manager.add_relay(url="ws://fake-relay", ssl_context=ctx)
         self.assertIs(relay_manager.relays["ws://fake-relay"].ssl_options, ctx)
         relay_manager.close_all_relay_connections()
+
+    def test_websocket_connect_receives_ssl_context(self):
+        ctx = ssl.create_default_context()
+        relay_manager = RelayManager()
+        relay_manager.add_relay(url="ws://fake-relay", ssl_context=ctx)
+        relay = relay_manager.relays["ws://fake-relay"]
+
+        captured = {}
+
+        @gen.coroutine
+        def fake_websocket_connect(request, *args, **kwargs):
+            captured["request"] = request
+
+            class DummyWS:
+                protocol = object()
+
+                def write_message(self, message):
+                    pass
+
+                @gen.coroutine
+                def read_message(self):
+                    return None
+
+                @gen.coroutine
+                def close(self):
+                    pass
+
+            raise gen.Return(DummyWS())
+
+        with patch("pynostr.relay.websocket_connect", fake_websocket_connect):
+            relay.io_loop.run_sync(relay.connect)
+
+        self.assertIsInstance(captured["request"], HTTPRequest)
+        self.assertIs(captured["request"].ssl_options, ctx)
