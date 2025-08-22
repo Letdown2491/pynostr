@@ -1,4 +1,5 @@
 import logging
+import ssl
 from typing import Optional
 
 from tornado import gen
@@ -22,6 +23,7 @@ class Relay(BaseRelay):
         close_on_eose: bool = True,
         message_callback=None,
         message_callback_url=False,
+        ssl_options: Optional[ssl.SSLContext] = None,
     ) -> None:
         if policy is None:
             policy = RelayPolicy()
@@ -37,6 +39,7 @@ class Relay(BaseRelay):
         self.ws = None
         self.io_loop = io_loop
         self.running = True
+        self.ssl_options = ssl_options
 
     @property
     def is_connected(self) -> bool:
@@ -56,6 +59,7 @@ class Relay(BaseRelay):
                         self.url,
                         ping_interval=60,
                         ping_timeout=120,
+                        ssl_options=self.ssl_options,
                     ),
                 )
             else:
@@ -63,6 +67,7 @@ class Relay(BaseRelay):
                     self.url,
                     ping_interval=60,
                     ping_timeout=120,
+                    ssl_options=self.ssl_options,
                 )
             self.connected = True
             # self.io_loop.call_later(1, self.send_message, self.request)
